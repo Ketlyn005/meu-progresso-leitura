@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#6b3048">
+<link rel="manifest" href="./manifest.json">
+<title>Meu Progresso de Leitura</title>
+<style>
+:root{--wine:#6b3048;--wine2:#8b4962;--sand:#f5eee7;--paper:#fffdfb;--ink:#30252a;--muted:#7b6d72;--line:#eadde1;--green:#47745a}
+*{box-sizing:border-box}body{margin:0;background:var(--sand);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(135deg,var(--wine),var(--wine2));color:white;padding:28px 18px 30px;border-radius:0 0 26px 26px}
+.wrap{max-width:760px;margin:auto;padding:0 16px}header .eyebrow{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;opacity:.8}h1{font-family:Georgia,serif;font-size:2rem;font-weight:500;margin:6px 0}header p{margin:0;opacity:.9;font-size:.95rem}
+main{padding:18px 0 40px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.stat,.panel,.book{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 3px 12px #4b28300a}
+.stat span{display:block;color:var(--muted);font-size:.82rem}.stat strong{display:block;font-size:1.65rem;color:var(--wine);margin-top:3px}
+h2{font-size:1.08rem;margin:0 0 12px} .panel{margin-bottom:16px}
+label{display:block;font-size:.86rem;font-weight:650;margin:10px 0 5px}
+input{width:100%;border:1px solid #d9c8cf;border-radius:11px;padding:12px;font:inherit;background:white;color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;cursor:pointer}
+.primary{background:var(--wine);color:white;width:100%;margin-top:14px}.secondary{background:#f0e4e9;color:var(--wine)}.danger{background:#f8e8e7;color:#923b3b;padding:8px 10px;font-size:.8rem}
+.book{margin-bottom:11px}.booktop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.book h3{font-size:1rem;margin:0 0 3px}.sub{font-size:.84rem;color:var(--muted)}.progress{height:8px;border-radius:99px;background:#eee4e7;overflow:hidden;margin:12px 0 6px}.bar{height:100%;background:var(--wine2);border-radius:99px}
+.bookcontrols{display:flex;gap:8px;align-items:end;margin-top:12px}.bookcontrols .field{flex:1;min-width:0}.bookcontrols label{margin-top:0}.bookcontrols input{padding:10px}.bookcontrols button{white-space:nowrap;padding:11px}
+.empty{color:var(--muted);text-align:center;padding:20px 8px}.note{font-size:.82rem;color:var(--muted);margin:10px 2px 0}
+.history{font-size:.9rem;color:var(--muted);max-height:180px;overflow:auto}.history div{padding:7px 0;border-bottom:1px solid var(--line)}
+footer{text-align:center;color:var(--muted);font-size:.78rem;padding:8px 0 20px}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.stat{padding:18px 14px}.stat strong{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">Seu cantinho de leitura</div><h1>Meu Progresso 📚</h1><p>Registre a página em que parou. Eu faço as contas para você.</p></div></header>
+<main class="wrap">
+<section class="stats">
+ <div class="stat"><span>Total de páginas lidas</span><strong id="totalPages">0</strong></div>
+ <div class="stat"><span>Livros cadastrados</span><strong id="bookCount">0</strong></div>
+ <div class="stat"><span>Livros concluídos</span><strong id="finishedCount">0</strong></div>
+ <div class="stat"><span>Páginas neste mês</span><strong id="monthPages">0</strong></div>
+</section>
+<section class="panel">
+<h2>Adicionar um livro</h2>
+<form id="addForm">
+<label for="title">Título do livro</label><input id="title" maxlength="120" placeholder="Ex.: Mr. Mercedes" required>
+<div class="grid2">
+<div><label for="total">Total de páginas</label><input id="total" type="number" min="1" max="100000" placeholder="Ex.: 400" required></div>
+<div><label for="current">Página em que está</label><input id="current" type="number" min="0" value="0" placeholder="0"></div>
+</div>
+<button class="primary" type="submit">Adicionar livro</button>
+<p class="note">Dica: se estiver começando agora, coloque 0 na página atual. Depois, basta informar a nova página para somar o que leu.</p>
+</form>
+</section>
+<section>
+<h2>Minha estante</h2>
+<div id="books"><div class="empty">Seus livros aparecerão aqui. Adicione o primeiro acima! 🌷</div></div>
+</section>
+<section class="panel">
+<h2>Histórico recente</h2><div class="history" id="history"><div>Nenhuma leitura registrada ainda.</div></div>
+<p class="note">As páginas são calculadas pela diferença entre o último registro e o novo. Se você reler páginas ou corrigir um registro, use a opção “Corrigir página” com atenção: o total contabilizado não diminui automaticamente.</p>
+</section>
+<footer>Seus registros ficam salvos neste navegador neste aparelho. Evite limpar os dados do navegador se quiser manter seu histórico.</footer>
+</main>
+<script>
+const KEY='meuProgressoLeitura_v1';
+let state={books:[],history:[]};
+try{const saved=localStorage.getItem(KEY);if(saved)state=JSON.parse(saved)}catch(e){}
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat('pt-BR').format(n);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){alert('Não foi possível salvar neste navegador. Anote seus dados antes de fechar.')}render()}
+function totalRead(){return state.history.reduce((s,h)=>s+h.delta,0)}
+function render(){
+ $('totalPages').textContent=fmt(totalRead());
+ $('bookCount').textContent=fmt(state.books.length);
+ $('finishedCount').textContent=fmt(state.books.filter(b=>b.current>=b.total).length);
+ const ym=today().slice(0,7);$('monthPages').textContent=fmt(state.history.filter(h=>h.date.startsWith(ym)).reduce((s,h)=>s+h.delta,0));
+ const root=$('books');
+ if(!state.books.length){root.innerHTML='<div class="empty">Seus livros aparecerão aqui. Adicione o primeiro acima! 🌷</div>'}
+ else {root.innerHTML='';state.books.forEach(b=>{
+  const pct=Math.min(100,Math.round(b.current/b.total*100));
+  const el=document.createElement('article');el.className='book';
+  el.innerHTML=`<div class="booktop"><div><h3></h3><div class="sub"></div></div><button class="danger" data-delete="${b.id}" type="button">Remover</button></div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><div class="sub">${fmt(b.current)} de ${fmt(b.total)} páginas · ${pct}% concluído${b.current>=b.total?' · Concluído! 🎉':''}</div><div class="bookcontrols"><div class="field"><label for="page-${b.id}">Nova página</label><input id="page-${b.id}" type="number" min="0" max="${b.total}" value="${b.current}"></div><button class="secondary" data-update="${b.id}" type="button">Atualizar</button></div>`;
+  el.querySelector('h3').textContent=b.title;el.querySelector('.booktop .sub').textContent='Seu progresso de leitura';
+  root.appendChild(el);
+ })}
+ const hist=$('history');hist.innerHTML='';
+ const recent=[...state.history].reverse().slice(0,12);
+ if(!recent.length)hist.innerHTML='<div>Nenhuma leitura registrada ainda.</div>';
+ else recent.forEach(h=>{const d=document.createElement('div');d.textContent=`${h.date} · ${h.title}: +${fmt(h.delta)} página(s) (até a página ${fmt(h.page)})`;hist.appendChild(d)});
+}
+$('addForm').addEventListener('submit',e=>{
+ e.preventDefault();const title=$('title').value.trim(),total=Number($('total').value),current=Number($('current').value||0);
+ if(!title||!Number.isInteger(total)||total<1||!Number.isInteger(current)||current<0||current>total){alert('Confira o título e as páginas. A página atual deve ficar entre 0 e o total do livro.');return}
+ const b={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,total,current};
+ state.books.push(b);
+ if(current>0)state.history.push({date:today(),title,delta:current,page:current,bookId:b.id});
+ $('addForm').reset();$('current').value=0;save();
+});
+$('books').addEventListener('click',e=>{
+ const del=e.target.dataset.delete, upd=e.target.dataset.update;
+ if(del){const b=state.books.find(x=>x.id===del);if(!b)return;if(confirm(`Remover "${b.title}" da estante? O histórico de páginas já lidas será mantido.`)){state.books=state.books.filter(x=>x.id!==del);save()}return}
+ if(upd){const b=state.books.find(x=>x.id===upd);if(!b)return;const val=Number($('page-'+upd).value);
+ if(!Number.isInteger(val)||val<0||val>b.total){alert(`Informe uma página entre 0 e ${b.total}.`);return}
+ if(val<b.current){alert('A nova página é menor que o registro anterior. Para não distorcer seu total, este app não registra regressões. Se foi um erro, mantenha o valor anterior e fale comigo para ajustarmos.');return}
+ const delta=val-b.current;if(delta===0){alert('Você ainda não avançou em relação ao último registro.');return}
+ b.current=val;state.history.push({date:today(),title:b.title,delta,page:val,bookId:b.id});save();
+ }
+});
+render();
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+MEU PROGRESSO DE LEITURA
+
+Este é um aplicativo web simples. Para instalá-lo na tela inicial do Android como um app:
+1. Publique os arquivos desta pasta em um serviço de hospedagem HTTPS gratuito (por exemplo, GitHub Pages).
+2. Abra o endereço publicado no Chrome do celular.
+3. Toque no menu ⋮ e escolha “Instalar app” ou “Adicionar à tela inicial”.
+
+Importante: os dados ficam salvos no armazenamento do navegador daquele aparelho. Não limpe os dados do site e faça exportações/anotações de segurança, pois não há sincronização na nuvem nesta versão.
